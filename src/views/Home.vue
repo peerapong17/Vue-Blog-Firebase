@@ -1,18 +1,34 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+  <v-container fluid class="px-10">
+    <v-row wrap class="mt-3">
+      <BlogCard
+        v-for="blog in blogList"
+        :key="blog.id"
+        :title="blog.title"
+        :content="blog.content"
+        :image="blog.imagePath"
+        :id="blog.id"
+        :like="blog.like"
+      />
+    </v-row>
+  </v-container>
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
-
+import BlogCard from "../components/BlogCard.vue";
+import { mapState, mapActions } from "vuex";
 export default {
-  name: 'Home',
-  components: {
-    HelloWorld
-  }
-}
+  components: { BlogCard },
+  async created() {
+    await this.fetchData();
+  },
+  methods: {
+    ...mapActions(["fetchData"]),
+  },
+  computed: {
+    ...mapState(["blogList"]),
+  },
+};
 </script>
+
+<style></style>

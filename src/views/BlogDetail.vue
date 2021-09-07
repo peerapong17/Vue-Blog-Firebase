@@ -8,6 +8,12 @@
             blog.title
           }}</v-card-title>
           <v-card-text>{{ blog.content }}</v-card-text>
+          <div class="d-flex justify-space-between align-center mx-4 my-2">
+            <v-chip small color="primary">
+              {{ blog.category }}
+            </v-chip>
+            <span>{{ convertedCreatedAt }}</span>
+          </div>
           <v-divider class="mx-4"></v-divider>
           <v-card-actions>
             <v-rating icon-label="custom icon label text {0} of {1}"></v-rating>
@@ -24,7 +30,6 @@
             >
           </v-card-actions>
         </v-card>
-
         <v-text-field
           v-model="comment"
           label="Comment"
@@ -38,10 +43,10 @@
           >
         </v-row>
         <Comment
-          v-for="(comment, index) in blog.comments"
+          v-for="(comment, index) in comments"
           :key="index"
           :comment="comment"
-          @deleteComment="onDeleteComment($event)"
+          @deleteComment="onDeleteComment()"
         />
       </v-col>
     </v-row>
@@ -50,46 +55,76 @@
 
 <script>
 import Comment from "../components/Comment.vue";
-import { mapState, mapActions } from "vuex";
+import moment from "moment";
+import { auth, db, arrayField, timeStamp } from "../firebase/configs";
 export default {
   components: { Comment },
   data() {
     return {
       comment: "",
       isLiked: false,
-      comments: {},
+      comments: [],
+      blog: {},
+      convertedCreatedAt: ''
     };
   },
-  async created() {
-    await this.fetchSpicificData(this.$route.params.blog_id);
-    this.isLiked = this.blog.like.includes(localStorage.getItem("id"));
+  created() {
+    db.collection("Blogs")
+      .doc(this.$route.params.blog_id)
+      .get()
+      .then((doc) => {
+        console.log(doc.data()["createdAt"]);
+        this.blog = { ...doc.data(), id: doc.id };
+        this.blog.likes.map((item) => {
+          if (item === auth.currentUser.uid) {
+            this.isLiked = true;
+          }
+        });
+        this.convertedCreatedAt = moment(this.blog.createdAt.toDate()).fromNow();
+      })
+      .then(() => {
+        const item = [];
+        db.collection("Comments")
+          .where("blogId", "==", this.blog.id)
+          .get()
+          .then((res) => {
+            res.docs.map((re) => {
+              item.push({ ...re.data(), id: re.id });
+            });
+          });
+        this.comments = item;
+      });
   },
   methods: {
-    ...mapActions(["fetchSpicificData", "addLike", "addComment", "deleteComment"]),
     async onAddLike() {
-      await this.addLike(this.$route.params.blog_id);
-      this.isLiked = this.blog.like.includes(localStorage.getItem("id"));
-    },
-    async onAddComment() {
-      if (this.comment.trim() !== "") {
-        const payload = {
-          comment: this.comment,
-          blogId: this.$route.params.blog_id
-        }
-        await this.addComment(payload)
-        this.comment = "";
+      if (!this.isLiked) {
+        await db
+          .collection("Blogs")
+          .doc(this.blog.id)
+          .update({
+            likes: arrayField.arrayUnion(auth.currentUser.uid),
+          });
+      } else {
+        await db
+          .collection("Blogs")
+          .doc(this.blog.id)
+          .update({
+            likes: arrayField.arrayRemove(auth.currentUser.uid),
+          });
       }
     },
-    async onDeleteComment(id) {
-      await this.deleteComment(id)
-      const commentIndex = this.blog.comments
-        .map((comment) => comment.id)
-        .indexOf(id);
-      this.blog.comments.splice(commentIndex, 1);
+    async onAddComment() {
+      await db.collection("Comments").add({
+        userId: auth.currentUser.uid,
+        username: auth.currentUser.displayName ?? "Anonymous",
+        blogId: this.blog.id,
+        comment: this.comment,
+        createdAt: timeStamp,
+      });
+
+      this.commen = "";
     },
-  },
-  computed: {
-    ...mapState(["blog"]),
+    onDeleteComment() {},
   },
 };
 </script>

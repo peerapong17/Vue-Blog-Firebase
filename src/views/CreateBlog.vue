@@ -39,6 +39,7 @@
           label="Content"
           required
         />
+        <v-select :items="categories" filled label="Category" v-model="category"></v-select>
         <v-btn @click="onCreateBlog" x-large color="success" class="mt-3" block
           >Create</v-btn
         >
@@ -63,7 +64,7 @@
 </template>
 
 <script>
-import { mapActions, mapState } from "vuex";
+import { auth, db, timeStamp, storageRef } from "../firebase/configs";
 export default {
   data() {
     return {
@@ -71,21 +72,34 @@ export default {
       content: "",
       imageUrl: "",
       imageFile: "",
+      category: "",
+      error: "",
+      categories: ["Travel", "Food", "Culture", "Tradition"],
     };
   },
   methods: {
-    ...mapActions(["createBlog"]),
     async onCreateBlog() {
       if (this.$refs.form.validate()) {
-        const payload = {
-          title: this.title,
-          content: this.content,
-          imageFile: this.imageFile,
-        };
-        await this.createBlog(payload);
-        if (this.error === "") {
-          this.$router.push("/home");
-        }
+        storageRef
+          .child("Image-" + Date.now())
+          .put(this.imageFile)
+          .then((data) => {
+            data.ref.getDownloadURL().then((url) => {
+              db.collection("Blogs")
+                .add({
+                  userId: auth.currentUser.uid,
+                  title: this.title,
+                  content: this.content,
+                  category: this.category,
+                  imagePath: url,
+                  likes: [],
+                  createdAt: timeStamp,
+                })
+                .then(() => {
+                  this.$router.push("/home");
+                });
+            });
+          });
       }
     },
     onPickFile() {
@@ -104,9 +118,6 @@ export default {
     onCancel() {
       this.$router.push("/home");
     },
-  },
-  computed: {
-    ...mapState(["error"]),
   },
 };
 </script>

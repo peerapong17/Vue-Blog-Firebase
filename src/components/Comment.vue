@@ -2,16 +2,18 @@
   <v-card class="mb-6 px-2">
     <v-row justify="center" align="center" class="flex-nowrap px-4 py-2">
       <v-avatar color="accent" class="mr-3" size="48"></v-avatar>
-
-      <span :style="{ margin: '0px 12px' }" v-if="!isEditting">{{ text }}</span>
-      <v-text-field
-        background-color="#fafafa"
-        flat
-        hide-details
-        v-else
-        solo
-        v-model="text"
-      ></v-text-field>
+      <div class="comment-box">
+        <span class="username">{{ comment.username }}</span>
+        <span class="comment" v-if="!isEditting">{{ text }}</span>
+        <v-text-field
+          background-color="#fafafa"
+          flat
+          hide-details
+          v-else
+          solo
+          v-model="text"
+        ></v-text-field>
+      </div>
       <v-spacer></v-spacer>
       <div v-if="isMyComment">
         <v-btn
@@ -31,12 +33,7 @@
           ><v-icon>mdi-check</v-icon></v-btn
         >
 
-        <v-btn
-          @click="$emit('deleteComment', comment.id)"
-          v-if="!isEditting"
-          small
-          dark
-          color="red"
+        <v-btn @click="deleteComment" v-if="!isEditting" small dark color="red"
           ><v-icon>mdi-delete</v-icon></v-btn
         >
         <v-btn v-else @click="onCancel" small dark color="red"
@@ -45,61 +42,60 @@
       </div>
     </v-row>
     <v-row class="px-4 pb-2">
-      <span class="ml-2" :style="{ color: '#6e6e6e' }">{{
-        comment.userId
-      }}</span>
       <v-spacer></v-spacer>
-      <span :style="{ color: '#adadad' }">{{ createdAt }}</span>
+      <span :style="{ color: '#adadad', fontSize: '15px' }">{{
+        convertedCreatedAt
+      }}</span>
     </v-row>
   </v-card>
 </template>
 
 <script>
-import axios from "axios";
 import moment from "moment";
+import { auth, db } from "../firebase/configs";
 export default {
   props: {
-    comment: Object,
+    comment: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
       text: "",
-      createdAt: "",
       isMyComment: false,
       isEditting: false,
+      convertedCreatedAt: ""
     };
   },
   created() {
-    this.createdAt = moment(this.comment.updated_at).fromNow();
-    if (this.comment.userId === localStorage.getItem("id")) {
+    this.convertedCreatedAt = moment(this.comment.createdAt.toDate()).fromNow();
+    if (this.comment.userId === auth.currentUser.uid) {
       this.isMyComment = true;
     }
     this.text = this.comment.comment;
+
   },
   methods: {
-    async onUpdateComment() {
+    onUpdateComment() {
       this.isEditting = !this.isEditting;
-      await axios.request(
-        `http://localhost:3000/comment/update/${this.comment.id}`,
-        {
-          method: "PUT",
-          data: { comment: this.text },
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token"),
-          },
-        }
-      );
+      db.collection("Comments")
+        .doc(this.comment.id)
+        .update({
+          comment: this.text,
+        })
+        .then(() => {
+          console.log("comment updated");
+        });
     },
-    async deleteComment() {
-      await axios.request(
-        `http://localhost:3000/comment/delete/${this.comment.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token"),
-          },
-        }
-      );
+    deleteComment() {
+      console.log("object");
+      db.collection("Comments")
+        .doc(this.comment.id)
+        .delete()
+        .then(() => {
+          console.log("comment deleted");
+        });
     },
 
     onCancel() {
@@ -110,4 +106,19 @@ export default {
 };
 </script>
 
-<style></style>
+<style scoped>
+.comment-box {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+}
+
+.username {
+  color: #6e6e6e;
+  font-size: 17px;
+}
+
+.comment {
+  font-size: 20px;
+}
+</style>

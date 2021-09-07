@@ -76,7 +76,8 @@
 </template>
 
 <script>
-import { mapActions, mapState } from "vuex";
+import { mapState } from "vuex";
+import { auth } from "./firebase/configs";
 export default {
   name: "App",
 
@@ -88,21 +89,22 @@ export default {
       drawer: false,
     };
   },
-  created() {
-    this.username = localStorage.getItem("username");
-    this.id = localStorage.getItem("id");
-  },
   methods: {
-    ...mapActions(["logout"]),
-    async onLogout() {
-      await this.logout();
-      this.dialog = false;
-      localStorage.clear();
-      this.$router.push("/login");
+    onLogout() {
+      auth
+        .signOut()
+        .then(() => {
+          this.dialog = false;
+          this.$router.push("/login");
+        })
+        .catch((err) => {
+          this.dialog = false;
+          console.log(err.message);
+        });
     },
   },
   computed: {
-    ...mapState(["items"])
-  }
+    ...mapState(["items"]),
+  },
 };
 </script>

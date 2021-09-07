@@ -71,9 +71,9 @@
           dismissible
           text
           width="450"
-          :value="error !== ''"
-          type="error"
-          >{{ error }}</v-alert
+          :value="error || success !== ''"
+          :type="error ? 'error' : 'success'"
+          >{{ error ? error : success }}</v-alert
         >
       </v-col>
     </v-row>
@@ -81,7 +81,8 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapMutations } from "vuex";
+import { auth } from "../firebase/configs";
+
 export default {
   data() {
     return {
@@ -89,30 +90,29 @@ export default {
       email: "",
       password: "",
       confirmPassword: "",
+      error: "",
+      success: "",
+      isLoading: false,
     };
   },
   methods: {
-    ...mapActions(["createUser"]),
-    ...mapMutations(["gotError"]),
-    async onSubmit() {
+    onSubmit() {
       if (this.$refs.form.validate()) {
-        const user = {
-          username: this.username,
-          email: this.email,
-          password: this.password,
-        };
-        await this.createUser(user);
-        if (this.error === "") {
-          this.$router.push("/login");
-        }
+        this.isLoading = true;
+        this.error = "";
+        auth
+          .createUserWithEmailAndPassword(this.email, this.password)
+          .then(() => {
+            auth.currentUser.updateProfile({ displayName: this.username });
+            this.isLoading = false;
+            this.success = "Create account success!";
+          })
+          .catch((err) => {
+            this.isLoading = false;
+            this.error = err.message;
+          });
       }
     },
-  },
-  computed: {
-    ...mapState(["isLoading", "error"]),
-  },
-  destroyed() {
-    this.gotError("");
   },
 };
 </script>

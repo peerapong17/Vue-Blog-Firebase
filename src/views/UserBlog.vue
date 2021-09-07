@@ -8,15 +8,15 @@
         :content="blog.content"
         :image="blog.imagePath"
         :id="blog.id"
-        :like="blog.like"
+        :likes="blog.likes"
       />
     </v-row>
   </v-container>
 </template>
 
 <script>
-import axios from "axios";
 import UserBlogCard from "../components/UserBlogCard.vue";
+import { auth, db } from "../firebase/configs";
 export default {
   components: { UserBlogCard },
   data() {
@@ -24,17 +24,18 @@ export default {
       blogList: [],
     };
   },
-  async created() {
-    const { data } = await axios.request(
-      "http://localhost:3000/blog/user-blogs",
-      {
-        method: "GET",
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-      }
-    );
-    this.blogList = data.blog;
+  created() {
+    db.collection("Blogs")
+      .orderBy("createdAt", "desc")
+      .onSnapshot((snapShot) => {
+        this.blogList = []
+        const userBlog = snapShot.docs.filter((doc) => {
+          return doc.data()["userId"] === auth.currentUser.uid;
+        });
+        userBlog.map((doc) => {
+          this.blogList.push({ ...doc.data(), id: doc.id });
+        });
+      });
   },
 };
 </script>

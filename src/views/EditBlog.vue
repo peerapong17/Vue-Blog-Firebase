@@ -3,8 +3,8 @@
     <v-col cols="9" md="6" sm="6">
       <v-form ref="form">
         <img
-          v-if="blog.imagePath"
-          :src="blog.imagePath"
+          v-if="image"
+          :src="image"
           alt="imageForBlog"
           width="100%"
           class="mb-4"
@@ -58,15 +58,27 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { mapActions } from "vuex";
+import { db, storage, storageRef } from "../firebase/configs";
 export default {
   data() {
     return {
       imageFile: "",
+      image: "",
+      blog: {},
     };
   },
-  async created() {
-    await this.fetchSpicificData(this.$route.params.blog_id);
+  created() {
+    db.collection("Blogs")
+      .doc(this.$route.params.blog_id)
+      .get()
+      .then((res) => {
+        this.blog = res.data();
+        this.image = this.blog.imagePath
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   },
   methods: {
     ...mapActions(["fetchSpicificData", "updateBlog", "deleteBlog"]),
@@ -80,29 +92,66 @@ export default {
       const files = event.target.files;
       const fileReader = new FileReader();
       fileReader.addEventListener("load", () => {
-        this.blog.imagePath = fileReader.result;
+        this.image = fileReader.result;
       });
 
       fileReader.readAsDataURL(files[0]);
       this.imageFile = files[0];
     },
     async onUpdate() {
-      const payload = {
-        title: this.blog.title,
-        content: this.blog.content,
-        imageFile: this.imageFile,
-        blogId: this.blog.id,
-      };
-      await this.updateBlog(payload);
-      this.$router.push("/user-blog");
+      if (
+        this.imageFile != "" &&
+        this.blog.title != "" &&
+        this.blog.content != ""
+      ) {
+        storageRef
+          .child("Image-" + Date.now())
+          .put(this.imageFile)
+          .then((data) => {
+            data.ref.getDownloadURL().then((url) => {
+              db.collection("Blogs")
+                .doc(this.$route.params.blog_id)
+                .update({
+                  title: this.blog.title,
+                  content: this.blog.content,
+                  imagePath: url,
+                })
+                .then(() => {
+                  storage
+                    .refFromURL(this.blog.imagePath)
+                    .delete()
+                    .then(() => {
+                      this.$router.push("/user-blog");
+                    });
+                });
+            });
+          });
+      } else {
+        db.collection("Blogs")
+          .doc(this.$route.params.blog_id)
+          .update({
+            title: this.blog.title,
+            content: this.blog.content,
+          })
+          .then(() => {
+            this.$router.push("/user-blog");
+          })
+          .catch((err) => {
+            console.log(err.message);
+          });
+      }
     },
     async onDelete() {
-      await this.deleteBlog(this.blog.id);
-      this.$router.push("/user-blog");
+      db.collection("Blogs")
+        .doc(this.$route.params.blog_id)
+        .delete()
+        .then(() => {
+          this.$router.push("/user-blog");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     },
-  },
-  computed: {
-    ...mapState(["blog"]),
   },
 };
 </script>

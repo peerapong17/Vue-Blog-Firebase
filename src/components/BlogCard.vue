@@ -6,6 +6,12 @@
       }}</v-card-title>
       <v-img height="250" :src="image"></v-img>
       <v-card-text>{{ content.substring(0, 90) + "..." }}</v-card-text>
+      <div class="d-flex justify-space-between align-center mx-3 my-2">
+        <v-chip small color="primary">
+          {{ category }}
+        </v-chip>
+        <span>{{ convertedCreatedAt }}</span>
+      </div>
       <v-divider class="mx-4"></v-divider>
       <v-card-actions>
         <v-btn @click.prevent="onDetail" outlined color="black"
@@ -26,35 +32,73 @@
 </template>
 
 <script>
-import {mapActions} from 'vuex'
+import moment from "moment";
+import { db, auth, arrayField } from "../firebase/configs";
 export default {
   props: {
-    title: String,
-    content: String,
-    image: String,
-    id: String,
-    like: Array,
+    title: {
+      type: String,
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    image: {
+      type: String,
+      required: true,
+    },
+    id: {
+      type: String,
+      required: true,
+    },
+    likes: {
+      type: Array,
+      required: true,
+    },
+    createdAt: {
+      type: Object,
+      required: true,
+    },
+    category: {
+      type: String,
+      required: true,
+    },
   },
   data() {
     return {
       isLiked: false,
+      convertedCreatedAt: "",
     };
   },
-  mounted() {
-    this.like.map((item) => {
-      if (item === localStorage.getItem("id")) {
+  created() {
+    this.convertedCreatedAt = moment(this.createdAt.toDate()).fromNow();
+    this.likes.map((item) => {
+      if (item === auth.currentUser.uid) {
         this.isLiked = true;
       }
     });
   },
   methods: {
-    ...mapActions(["addLike"]),
     onDetail() {
       this.$router.push(`/blog-detail/${this.id}`);
     },
     async onAddLike() {
-      // this.like = data.blog.like;
-      await this.addLike(this.id)
+      if (!this.isLiked) {
+        await db
+          .collection("Blogs")
+          .doc(this.id)
+          .update({
+            likes: arrayField.arrayUnion(auth.currentUser.uid),
+          });
+      } else {
+        await db
+          .collection("Blogs")
+          .doc(this.id)
+          .update({
+            likes: arrayField.arrayRemove(auth.currentUser.uid),
+          });
+      }
     },
   },
 };

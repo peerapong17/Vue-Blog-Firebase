@@ -24,34 +24,45 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { auth, db, arrayField } from "../firebase/configs";
 export default {
   props: {
     title: String,
     content: String,
     image: String,
     id: String,
-    like: Array,
+    likes: Array,
   },
   data() {
     return {
       isLiked: false,
     };
   },
-  mounted() {
-    this.like.map((item) => {
-      if (item === localStorage.getItem("id")) {
+  created() {
+    this.likes.map((item) => {
+      if (item === auth.currentUser.uid) {
         this.isLiked = true;
       }
     });
   },
   methods: {
-    ...mapActions(["addLike"]),
     onDetail() {
       this.$router.push(`/edit-blog/${this.id}`);
     },
     async onAddLike() {
-      await this.addLike(this.id);
+      if (!this.isLiked) {
+        db.collection("Blogs")
+          .doc(this.id)
+          .update({
+            likes: arrayField.arrayUnion(auth.currentUser.uid),
+          });
+      } else {
+        db.collection("Blogs")
+          .doc(this.id)
+          .update({
+            likes: arrayField.arrayRemove(auth.currentUser.uid),
+          });
+      }
     },
   },
 };

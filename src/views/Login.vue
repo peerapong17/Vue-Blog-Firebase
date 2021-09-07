@@ -16,7 +16,7 @@
               prepend-inner-icon="mdi-email"
               label="Email"
               solo
-              v-model="username"
+              v-model="email"
             ></v-text-field>
             <v-text-field
               background-color="#e6fffa"
@@ -46,8 +46,13 @@
             elevation="1"
             class="mt-2"
             style="width: 100%"
-            ><v-icon dense left class="mr-3">mdi-google</v-icon>
-            <h3>Login with Google</h3></v-btn
+            @click="onGoogleSignin"
+            ><img
+              :src="require('@/assets/images/google.jpg')"
+              alt="google"
+              width="30"
+            />
+            <h2 class="ml-3">Login with Google</h2></v-btn
           >
         </v-card>
         <v-alert
@@ -68,35 +73,39 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapMutations } from "vuex";
+import { auth, googleProvider } from "../firebase/configs";
+
 export default {
   data() {
     return {
-      username: "",
+      email: "",
       password: "",
+      error: "",
+      isLoading: false,
     };
   },
   methods: {
-    ...mapActions(["loginUser"]),
-    ...mapMutations(["gotError"]),
-    async onSubmit() {
-      if (this.username.trim() !== "" && this.password.trim() !== null) {
-        const user = {
-          username: this.username,
-          password: this.password,
-        };
-        await this.loginUser(user);
-        if (this.error === "") {
-          this.$router.push("/home");
-        }
-      }
+    onSubmit() {
+      this.isLoading = true;
+      this.error = "";
+      auth
+        .signInWithEmailAndPassword(this.email, this.password)
+        .then((userCredential) => {
+          if (userCredential) {
+            this.isLoading = false;
+            this.$router.push("/home");
+          }
+        })
+        .catch((err) => {
+          this.isLoading = false;
+          this.error = err.message;
+        });
     },
-  },
-  computed: {
-    ...mapState(["error", "isLoading"]),
-  },
-  destroyed() {
-    this.gotError("");
+    onGoogleSignin() {
+      auth.signInWithPopup(googleProvider).then(() => {
+        this.$router.push("/home");
+      });
+    },
   },
 };
 </script>

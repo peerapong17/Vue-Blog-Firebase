@@ -55,12 +55,18 @@ export default {
           .doc(this.id)
           .update({
             likes: arrayField.arrayUnion(auth.currentUser.uid),
+          })
+          .then(() => {
+            this.isLiked = !this.isLiked;
           });
       } else {
         db.collection("Blogs")
           .doc(this.id)
           .update({
             likes: arrayField.arrayRemove(auth.currentUser.uid),
+          })
+          .then(() => {
+            this.isLiked = !this.isLiked;
           });
       }
     },

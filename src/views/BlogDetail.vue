@@ -46,7 +46,7 @@
           v-for="(comment, index) in comments"
           :key="index"
           :comment="comment"
-          @deleteComment="onDeleteComment()"
+          @onDeleteComment="onDeleteComment($event)"
         />
       </v-col>
     </v-row>
@@ -62,10 +62,10 @@ export default {
   data() {
     return {
       comment: "",
-      isLiked: false,
-      comments: [],
       blog: {},
-      convertedCreatedAt: ''
+      comments: [],
+      isLiked: false,
+      convertedCreatedAt: "",
     };
   },
   created() {
@@ -73,26 +73,25 @@ export default {
       .doc(this.$route.params.blog_id)
       .get()
       .then((doc) => {
-        console.log(doc.data()["createdAt"]);
         this.blog = { ...doc.data(), id: doc.id };
+        this.convertedCreatedAt = moment(
+          this.blog.createdAt.toDate()
+        ).fromNow();
         this.blog.likes.map((item) => {
           if (item === auth.currentUser.uid) {
             this.isLiked = true;
           }
         });
-        this.convertedCreatedAt = moment(this.blog.createdAt.toDate()).fromNow();
       })
       .then(() => {
-        const item = [];
         db.collection("Comments")
           .where("blogId", "==", this.blog.id)
           .get()
           .then((res) => {
-            res.docs.map((re) => {
-              item.push({ ...re.data(), id: re.id });
+            res.docs.map((doc) => {
+              this.comments.push({ ...doc.data(), id: doc.id });
             });
           });
-        this.comments = item;
       });
   },
   methods: {
@@ -103,6 +102,9 @@ export default {
           .doc(this.blog.id)
           .update({
             likes: arrayField.arrayUnion(auth.currentUser.uid),
+          })
+          .then(() => {
+            this.isLiked = !this.isLiked;
           });
       } else {
         await db
@@ -110,21 +112,49 @@ export default {
           .doc(this.blog.id)
           .update({
             likes: arrayField.arrayRemove(auth.currentUser.uid),
+          })
+          .then(() => {
+            this.isLiked = !this.isLiked;
           });
       }
     },
     async onAddComment() {
-      await db.collection("Comments").add({
-        userId: auth.currentUser.uid,
-        username: auth.currentUser.displayName ?? "Anonymous",
-        blogId: this.blog.id,
-        comment: this.comment,
-        createdAt: timeStamp,
-      });
-
-      this.commen = "";
+      await db
+        .collection("Comments")
+        .add({
+          userId: auth.currentUser.uid,
+          username: auth.currentUser.displayName ?? "Anonymous",
+          blogId: this.blog.id,
+          comment: this.comment,
+          createdAt: timeStamp,
+        })
+        .then((res) => {
+          this.comments = [
+            ...this.comments,
+            {
+              id: res.id,
+              userId: auth.currentUser.uid,
+              username: auth.currentUser.displayName ?? "Anonymous",
+              blogId: this.blog.id,
+              comment: this.comment,
+              createdAt: timeStamp,
+            },
+          ];
+        });
+      this.comment = "";
     },
-    onDeleteComment() {},
+    onDeleteComment(blog_id) {
+      db.collection("Comments")
+        .doc(blog_id)
+        .delete()
+        .then(() => {
+          console.log("comment deleted");
+          const index = this.comments
+            .map((comment) => comment.id)
+            .indexOf(blog_id);
+          this.comments.splice(index, 1);
+        });
+    },
   },
 };
 </script>

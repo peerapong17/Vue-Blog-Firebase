@@ -1,35 +1,35 @@
 <template>
   <v-container fluid class="px-10">
-    <v-row justify="center" class="mt-16" v-if="blogList.length == 0">
+    <v-row justify="center" class="mt-16" v-if="blogListListener.length == 0">
       <v-col class="md-4">
-          <v-skeleton-loader
-            class="mx-auto"
-            max-width="300"
-            height="350"
-            width="100%"
-            type="card"
-          ></v-skeleton-loader>
+        <v-skeleton-loader
+          class="mx-auto"
+          max-width="300"
+          height="350"
+          width="100%"
+          type="card"
+        ></v-skeleton-loader>
       </v-col>
       <v-col class="md-4">
-          <v-skeleton-loader
-            class="mx-auto"
-            max-width="300"
-            width="100%"
-            type="card"
-          ></v-skeleton-loader>
+        <v-skeleton-loader
+          class="mx-auto"
+          max-width="300"
+          width="100%"
+          type="card"
+        ></v-skeleton-loader>
       </v-col>
       <v-col class="md-4">
-          <v-skeleton-loader
-            class="mx-auto"
-            max-width="300"
-            width="100%"
-            type="card"
-          ></v-skeleton-loader>
+        <v-skeleton-loader
+          class="mx-auto"
+          max-width="300"
+          width="100%"
+          type="card"
+        ></v-skeleton-loader>
       </v-col>
     </v-row>
     <v-row wrap class="mt-3" v-else>
       <BlogCard
-        v-for="blog in blogList"
+        v-for="blog in blogListListener"
         :key="blog.id"
         :title="blog.title"
         :content="blog.content"
@@ -44,9 +44,8 @@
 </template>
 
 <script>
-import BlogCard from "../components/BlogCard.vue";
-import { mapActions } from "vuex";
 import { db } from "../firebase/configs";
+import BlogCard from "../components/BlogCard.vue";
 export default {
   components: { BlogCard },
   data() {
@@ -64,10 +63,11 @@ export default {
         });
       });
   },
-  methods: {
-    ...mapActions(["fetchData"]),
+  computed: {
+    blogListListener() {
+      return [...this.blogList];
+    },
   },
-  computed: {},
 };
 </script>
 

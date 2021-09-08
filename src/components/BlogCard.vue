@@ -68,11 +68,9 @@ export default {
   data() {
     return {
       isLiked: false,
-      convertedCreatedAt: "",
     };
   },
   created() {
-    this.convertedCreatedAt = moment(this.createdAt.toDate()).fromNow();
     this.likes.map((item) => {
       if (item === auth.currentUser.uid) {
         this.isLiked = true;
@@ -90,6 +88,9 @@ export default {
           .doc(this.id)
           .update({
             likes: arrayField.arrayUnion(auth.currentUser.uid),
+          })
+          .then(() => {
+            this.isLiked = !this.isLiked;
           });
       } else {
         await db
@@ -97,8 +98,16 @@ export default {
           .doc(this.id)
           .update({
             likes: arrayField.arrayRemove(auth.currentUser.uid),
+          })
+          .then(() => {
+            this.isLiked = !this.isLiked;
           });
       }
+    },
+  },
+  computed: {
+    convertedCreatedAt() {
+      return moment(this.createdAt.toDate()).fromNow();
     },
   },
 };

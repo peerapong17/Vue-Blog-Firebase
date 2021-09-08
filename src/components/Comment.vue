@@ -33,7 +33,7 @@
           ><v-icon>mdi-check</v-icon></v-btn
         >
 
-        <v-btn @click="deleteComment" v-if="!isEditting" small dark color="red"
+        <v-btn @click="$emit('onDeleteComment', comment.id)" v-if="!isEditting" small dark color="red"
           ><v-icon>mdi-delete</v-icon></v-btn
         >
         <v-btn v-else @click="onCancel" small dark color="red"
@@ -63,8 +63,8 @@ export default {
   data() {
     return {
       text: "",
-      isMyComment: false,
       isEditting: false,
+      isMyComment: false,
       convertedCreatedAt: ""
     };
   },
@@ -85,16 +85,7 @@ export default {
           comment: this.text,
         })
         .then(() => {
-          console.log("comment updated");
-        });
-    },
-    deleteComment() {
-      console.log("object");
-      db.collection("Comments")
-        .doc(this.comment.id)
-        .delete()
-        .then(() => {
-          console.log("comment deleted");
+          console.log("Comment updated")
         });
     },
 

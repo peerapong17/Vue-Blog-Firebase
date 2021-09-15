@@ -6,7 +6,7 @@
       align-content="center"
     >
       <v-col md="4" sm="8" class="d-flex justify-center">
-        <v-card elevation="3" class="pa-6 rounded-lg" width="100%">
+        <v-card elevation="3" class="card pa-6 rounded-lg">
           <v-form ref="form" lazy-validation>
             <span class="text-center d-block mb-6 display-1 font-weight-bold "
               >Login</span
@@ -25,11 +25,17 @@
               solo
               v-model="password"
               type="password"
+              hide-details
             ></v-text-field>
           </v-form>
-          <router-link :to="{ name: 'Register' }" class="text-end d-block mb-4"
-            >Don't have an account?</router-link
-          >
+          <div class="forgetPasswordOrCreateAccountBox">
+            <router-link class="forgetPassword" :to="{ name: 'ForgetPassword' }"
+              >Forget Password?</router-link
+            >
+            <router-link class="CreateAccount" :to="{ name: 'Register' }"
+              >Don't have an account?</router-link
+            >
+          </div>
 
           <v-btn
             :loading="isLoading"
@@ -73,7 +79,7 @@
 </template>
 
 <script>
-import { auth, googleProvider } from "../firebase/configs";
+import { auth, googleProvider } from "../../firebase/configs";
 
 export default {
   data() {
@@ -110,11 +116,22 @@ export default {
 };
 </script>
 
-<style>
-.text-end {
+<style scoped>
+.forgetPasswordOrCreateAccountBox {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 27px;
+  margin-top: 10px;
+}
+.CreateAccount, .forgetPassword {
   text-decoration: none;
 }
-.text-end:hover {
+
+.CreateAccount:hover, .forgetPassword:hover {
   text-decoration: underline;
+}
+
+.card{
+  max-width: 400px;
 }
 </style>

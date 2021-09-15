@@ -1,6 +1,6 @@
 <template>
   <v-row justify="center" class="mt-8 mb-4">
-    <v-col cols="9" md="6" sm="6">
+    <v-col cols="9" md="6" sm="6" class="cols">
       <v-form ref="form">
         <img
           v-if="image"
@@ -42,9 +42,18 @@
       </v-form>
       <v-row>
         <v-spacer></v-spacer>
-        <v-btn @click="onUpdate" color="primary" class="mt-3">Update</v-btn>
+        <v-btn
+          @click="onUpdate"
+          :loading="isUpdateBtnLoading"
+          :disabled="isUpdateBtnLoading"
+          color="primary"
+          class="mt-3"
+          >Update</v-btn
+        >
         <v-btn
           @click="onDelete"
+          :loading="isDeleteBtnLoading"
+          :disabled="isDeleteBtnLoading"
           color="red lighten-1"
           class="mt-3 ml-2 white--text"
           >Delete</v-btn
@@ -54,18 +63,34 @@
         >
       </v-row>
     </v-col>
+    <v-alert
+      border="left"
+      style="position: absolute; bottom: 40px;"
+      transition="slide-y-reverse-transition"
+      dismissible
+      text
+      width="450"
+      :value="error || success !== ''"
+      :type="error ? 'error' : 'success'"
+      >{{ error ? error : success }}</v-alert
+    >
   </v-row>
 </template>
 
 <script>
 import { mapActions } from "vuex";
-import { db, storage, storageRef } from "../firebase/configs";
+import { db, storage, storageRef, auth } from "../../firebase/configs";
 export default {
   data() {
     return {
       imageFile: "",
-      image: "",
       blog: {},
+      success: "",
+      error: "",
+      image: "",
+      isUpdateBtnLoading: false,
+      isDeleteBtnLoading: false,
+      fileType: ["image/png", "image/jpeg"],
     };
   },
   created() {
@@ -73,8 +98,8 @@ export default {
       .doc(this.$route.params.blog_id)
       .get()
       .then((res) => {
-        this.blog = res.data();
-        this.image = this.blog.imagePath
+        this.blog = { ...res.data(), id: res.id };
+        this.image = this.blog.imageUrl;
       })
       .catch((err) => {
         console.log(err);
@@ -89,14 +114,18 @@ export default {
       this.$router.push("/user-blog");
     },
     onFilePicked(event) {
-      const files = event.target.files;
-      const fileReader = new FileReader();
-      fileReader.addEventListener("load", () => {
-        this.image = fileReader.result;
-      });
+      const files = event.target.files[0];
 
-      fileReader.readAsDataURL(files[0]);
-      this.imageFile = files[0];
+      if (this.fileType.indexOf(files.type) > -1) {
+        const fileReader = new FileReader();
+        fileReader.addEventListener("load", () => {
+          this.image = fileReader.result;
+        });
+        fileReader.readAsDataURL(files);
+        this.imageFile = files;
+      } else {
+        this.error = "Please select an image file (jpeg or png)";
+      }
     },
     async onUpdate() {
       if (
@@ -104,8 +133,10 @@ export default {
         this.blog.title != "" &&
         this.blog.content != ""
       ) {
+        this.isUpdateBtnLoading = true;
+        const filePath = `images/${auth.currentUser.uid}/Image-${Date.now()}`;
         storageRef
-          .child("Image-" + Date.now())
+          .ref(filePath)
           .put(this.imageFile)
           .then((data) => {
             data.ref.getDownloadURL().then((url) => {
@@ -114,19 +145,31 @@ export default {
                 .update({
                   title: this.blog.title,
                   content: this.blog.content,
-                  imagePath: url,
+                  imageUrl: url,
+                  filePath: filePath,
                 })
                 .then(() => {
                   storage
-                    .refFromURL(this.blog.imagePath)
+                    .ref(this.blog.filePath)
                     .delete()
                     .then(() => {
-                      this.$router.push("/user-blog");
+                      this.isUpdateBtnLoading = false;
+                      this.success = "Blog updated successfully";
+                      setTimeout(() => {
+                        this.$router.push({ name: "User-Blog" });
+                      }, 3000);
+                    })
+                    .catch((err) => {
+                      console.log(err);
                     });
+                })
+                .catch((err) => {
+                  this.error = err.message;
                 });
             });
           });
       } else {
+        this.isUpdateBtnLoading = true;
         db.collection("Blogs")
           .doc(this.$route.params.blog_id)
           .update({
@@ -134,26 +177,49 @@ export default {
             content: this.blog.content,
           })
           .then(() => {
-            this.$router.push("/user-blog");
+            this.isUpdateBtnLoading = false;
+            this.success = "Blog updated successfully";
+            setTimeout(() => {
+              this.$router.push({ name: "User-Blog" });
+            }, 3000);
           })
           .catch((err) => {
-            console.log(err.message);
+            this.isUpdateBtnLoading = false;
+            this.error = err.message;
           });
       }
     },
     async onDelete() {
+      this.isDeleteBtnLoading = true;
       db.collection("Blogs")
         .doc(this.$route.params.blog_id)
         .delete()
         .then(() => {
-          this.$router.push("/user-blog");
+          storage
+            .refFromURL(this.blog.imageUrl)
+            .delete()
+            .then(() => {
+              this.isDeleteBtnLoading = false;
+              this.success = "Blog updated successfully";
+              setTimeout(() => {
+                this.$router.push({ name: "User-Blog" });
+              }, 3000);
+            })
+            .catch((err) => {
+              console.log(err);
+            });
         })
         .catch((err) => {
-          console.log(err);
+          this.isDeleteBtnLoading = false;
+          this.error = err.message;
         });
     },
   },
 };
 </script>
 
-<style></style>
+<style scoped>
+.cols {
+  position: relative;
+}
+</style>

@@ -4,7 +4,7 @@
       <v-card-title class="headline font-weight-medium">{{
         title.substring(0, 1).toUpperCase() + title.substring(1)
       }}</v-card-title>
-      <v-img height="250" :src="image"></v-img>
+      <v-img height="250" :src="imageUrl"></v-img>
       <v-card-text>{{ content.substring(0, 90) + "..." }}</v-card-text>
       <v-divider class="mx-4"></v-divider>
       <v-card-actions>
@@ -29,7 +29,7 @@ export default {
   props: {
     title: String,
     content: String,
-    image: String,
+    imageUrl: String,
     id: String,
     likes: Array,
   },

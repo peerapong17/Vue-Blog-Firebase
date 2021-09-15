@@ -1,16 +1,32 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Login from "../views/Login.vue";
-import Register from "../views/Register.vue";
+import Login from "../views/auth/Login.vue";
+import Register from "../views/auth/Register.vue";
+import ForgetPassword from "../views/auth/ForgetPassword.vue";
 import Home from "../views/Home.vue";
-import CreateBlog from "../views/CreateBlog.vue";
-import BlogDetail from "../views/BlogDetail.vue";
-import UserBlog from "../views/UserBlog.vue";
-import EditBlog from "../views/EditBlog.vue";
+import CreateBlog from "../views/blog/CreateBlog.vue";
+import BlogDetail from "../views/blog/BlogDetail.vue";
+import UserBlog from "../views/blog/UserBlog.vue";
+import EditBlog from "../views/blog/EditBlog.vue";
+import { auth } from "../firebase/configs";
 
 Vue.use(VueRouter);
 
+const authGuard = (to, from, next) => {
+  auth.onAuthStateChanged((user) => {
+    if (!user) {
+      next({ name: "Login" });
+    } else {
+      next();
+    }
+  });
+};
+
 const routes = [
+  {
+    path: "/",
+    redirect: "/login",
+  },
   {
     path: "/login",
     name: "Login",
@@ -22,29 +38,39 @@ const routes = [
     component: Register,
   },
   {
+    path: "/forgetPassword",
+    name: "ForgetPassword",
+    component: ForgetPassword,
+  },
+  {
     path: "/home",
     name: "Home",
     component: Home,
+    beforeEnter: authGuard,
   },
   {
     path: "/create-blog",
     name: "Create-Blog",
     component: CreateBlog,
+    beforeEnter: authGuard,
   },
   {
     path: "/blog-detail/:blog_id",
     name: "Blog-Detail",
     component: BlogDetail,
+    beforeEnter: authGuard,
   },
   {
     path: "/user-blog",
     name: "User-Blog",
     component: UserBlog,
+    beforeEnter: authGuard,
   },
   {
     path: "/edit-blog/:blog_id",
     name: "Edit-Blog",
     component: EditBlog,
+    beforeEnter: authGuard,
   },
   // {
   //   path: '/about',

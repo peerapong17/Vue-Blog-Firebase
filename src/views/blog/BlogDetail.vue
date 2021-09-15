@@ -1,9 +1,16 @@
 <template>
   <v-container>
     <v-row justify="center">
-      <v-col md="8" sm="8">
+      <v-progress-circular
+        v-if="isLoading"
+        :size="50"
+        color="black"
+        indeterminate
+        class="spinner"
+      ></v-progress-circular>
+      <v-col md="8" sm="8" v-else>
         <v-card elevation="2">
-          <v-img class="mx-auto mt-4" :src="blog.imagePath" width="100%" />
+          <v-img class="mx-auto mt-4" :src="blog.imageUrl" width="100%" />
           <v-card-title class="text-center headline font-weight-medium">{{
             blog.title
           }}</v-card-title>
@@ -54,9 +61,9 @@
 </template>
 
 <script>
-import Comment from "../components/Comment.vue";
 import moment from "moment";
-import { auth, db, arrayField, timeStamp } from "../firebase/configs";
+import Comment from "../../components/Comment.vue";
+import { auth, db, arrayField, timeStamp } from "../../firebase/configs";
 export default {
   components: { Comment },
   data() {
@@ -64,8 +71,7 @@ export default {
       comment: "",
       blog: {},
       comments: [],
-      isLiked: false,
-      convertedCreatedAt: "",
+      isLoading: true,
     };
   },
   created() {
@@ -74,20 +80,13 @@ export default {
       .get()
       .then((doc) => {
         this.blog = { ...doc.data(), id: doc.id };
-        this.convertedCreatedAt = moment(
-          this.blog.createdAt.toDate()
-        ).fromNow();
-        this.blog.likes.map((item) => {
-          if (item === auth.currentUser.uid) {
-            this.isLiked = true;
-          }
-        });
       })
       .then(() => {
         db.collection("Comments")
           .where("blogId", "==", this.blog.id)
           .get()
           .then((res) => {
+            this.isLoading = false;
             res.docs.map((doc) => {
               this.comments.push({ ...doc.data(), id: doc.id });
             });
@@ -104,7 +103,7 @@ export default {
             likes: arrayField.arrayUnion(auth.currentUser.uid),
           })
           .then(() => {
-            this.isLiked = !this.isLiked;
+            this.blog.likes.push(auth.currentUser.uid);
           });
       } else {
         await db
@@ -114,7 +113,9 @@ export default {
             likes: arrayField.arrayRemove(auth.currentUser.uid),
           })
           .then(() => {
-            this.isLiked = !this.isLiked;
+            this.blog.likes = this.blog.likes.filter((like) => {
+              return like !== auth.currentUser.uid;
+            });
           });
       }
     },
@@ -148,7 +149,6 @@ export default {
         .doc(blog_id)
         .delete()
         .then(() => {
-          console.log("comment deleted");
           const index = this.comments
             .map((comment) => comment.id)
             .indexOf(blog_id);
@@ -156,7 +156,23 @@ export default {
         });
     },
   },
+  computed: {
+    isLiked() {
+      if (this.blog.likes.includes(auth.currentUser.uid)) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    convertedCreatedAt() {
+      return moment(this.blog.createdAt.toDate()).fromNow();
+    },
+  },
 };
 </script>
 
-<style></style>
+<style scoped>
+  .spinner{
+    margin-top: 200px;
+  }
+</style>

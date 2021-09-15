@@ -6,7 +6,7 @@
       align-content="center"
     >
       <v-col md="4" sm="8" class="d-flex justify-center">
-        <v-card elevation="3" class="pa-6 rounded-lg" width="100%">
+        <v-card elevation="3" class="card pa-6 rounded-lg" width="100%">
           <v-form ref="form" lazy-validation>
             <v-text-field
               background-color="#fff2ff"
@@ -49,9 +49,10 @@
               :rules="[(v) => !!v || 'confirmPassword is required']"
               v-model="confirmPassword"
               required
+              hide-details
             ></v-text-field>
           </v-form>
-          <router-link :to="{ name: 'Login' }" class="text-end d-block mb-4"
+          <router-link :to="{ name: 'Login' }" class="login"
             >Already have an account?</router-link
           >
           <v-btn
@@ -81,7 +82,7 @@
 </template>
 
 <script>
-import { auth } from "../firebase/configs";
+import { auth } from "../../firebase/configs";
 
 export default {
   data() {
@@ -117,11 +118,17 @@ export default {
 };
 </script>
 
-<style>
-.text-end {
+<style scoped>
+.login {
+  float: right;
+  margin-top: 10px;
+  margin-bottom: 27px;
   text-decoration: none;
 }
-.text-end:hover {
+.login:hover {
   text-decoration: underline;
+}
+.card{
+  max-width: 400px;
 }
 </style>

@@ -15,7 +15,8 @@ const auth = app.auth();
 const db = app.firestore();
 const arrayField = firebase.firestore.FieldValue;
 const storage = app.storage();
-const storageRef = storage.ref("Blogs").child("Images");
+// const storageRef = storage.ref("Blogs").child("Images");
+const storageRef = storage
 const timeStamp = firebase.firestore.Timestamp.now();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 

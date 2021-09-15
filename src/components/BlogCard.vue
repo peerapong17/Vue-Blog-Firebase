@@ -4,7 +4,7 @@
       <v-card-title class="headline font-weight-medium">{{
         title.substring(0, 1).toUpperCase() + title.substring(1)
       }}</v-card-title>
-      <v-img height="250" :src="image"></v-img>
+      <v-img height="250" :src="imageUrl"></v-img>
       <v-card-text>{{ content.substring(0, 90) + "..." }}</v-card-text>
       <div class="d-flex justify-space-between align-center mx-3 my-2">
         <v-chip small color="primary">
@@ -44,7 +44,7 @@ export default {
       type: String,
       required: true,
     },
-    image: {
+    imageUrl: {
       type: String,
       required: true,
     },

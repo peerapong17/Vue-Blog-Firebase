@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="px-10">
-    <v-row justify="center" class="mt-16" v-if="blogListListener.length == 0">
+    <v-row justify="center" class="mt-16" v-if="isLoading">
       <v-col class="md-4">
         <v-skeleton-loader
           class="mx-auto"
@@ -28,17 +28,22 @@
       </v-col>
     </v-row>
     <v-row wrap class="mt-3" v-else>
-      <BlogCard
-        v-for="blog in blogListListener"
-        :key="blog.id"
-        :title="blog.title"
-        :content="blog.content"
-        :image="blog.imagePath"
-        :id="blog.id"
-        :likes="blog.likes"
-        :createdAt="blog.createdAt"
-        :category="blog.category"
-      />
+      <template v-if="blogListListener.length != 0">
+        <BlogCard
+          v-for="blog in blogListListener"
+          :key="blog.id"
+          :title="blog.title"
+          :content="blog.content"
+          :imageUrl="blog.imageUrl"
+          :id="blog.id"
+          :likes="blog.likes"
+          :createdAt="blog.createdAt"
+          :category="blog.category"
+        />
+      </template>
+      <div v-else class="noBlog">
+        <h1>There is no blog...</h1>
+      </div>
     </v-row>
   </v-container>
 </template>
@@ -50,6 +55,7 @@ export default {
   components: { BlogCard },
   data() {
     return {
+      isLoading: true,
       blogList: [],
     };
   },
@@ -57,6 +63,8 @@ export default {
     db.collection("Blogs")
       .orderBy("createdAt", "desc")
       .onSnapshot((snapShot) => {
+        console.log(snapShot)
+        this.isLoading = false;
         this.blogList = [];
         snapShot.docs.map((doc) => {
           this.blogList.push({ ...doc.data(), id: doc.id });
@@ -71,4 +79,12 @@ export default {
 };
 </script>
 
-<style></style>
+<style>
+.noBlog {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 100px;
+  font-size: 30px;
+}
+</style>

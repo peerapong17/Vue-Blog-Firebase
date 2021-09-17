@@ -1,6 +1,13 @@
 <template>
   <v-row justify="center" class="mt-8 mb-4">
-    <v-col cols="9" md="6" sm="6" class="cols">
+    <v-progress-circular
+      v-if="isLoading"
+      :size="50"
+      color="black"
+      indeterminate
+      class="spinner"
+    ></v-progress-circular>
+    <v-col cols="9" md="6" sm="6" class="cols" v-else>
       <v-form ref="form">
         <img
           v-if="image"
@@ -51,7 +58,7 @@
           >Update</v-btn
         >
         <v-btn
-          @click="onDelete"
+          @click="dialog = true"
           :loading="isDeleteBtnLoading"
           :disabled="isDeleteBtnLoading"
           color="red lighten-1"
@@ -63,6 +70,29 @@
         >
       </v-row>
     </v-col>
+    <v-dialog v-model="dialog" max-width="290">
+      <v-card>
+        <v-card-title class="text-h5">
+          Are you sure?
+        </v-card-title>
+
+        <v-card-text>
+          You will be directed to the home page.
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+
+          <v-btn text color="primary" @click="dialog = false">
+            cancel
+          </v-btn>
+
+          <v-btn color="red lighten-1" class="white--text" @click="onDelete">
+            OK
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-alert
       border="left"
       style="position: absolute; bottom: 40px;"
@@ -88,6 +118,8 @@ export default {
       success: "",
       error: "",
       image: "",
+      dialog: false,
+      isLoading: true,
       isUpdateBtnLoading: false,
       isDeleteBtnLoading: false,
       fileType: ["image/png", "image/jpeg"],
@@ -98,10 +130,12 @@ export default {
       .doc(this.$route.params.blog_id)
       .get()
       .then((res) => {
+        this.isLoading = false;
         this.blog = { ...res.data(), id: res.id };
         this.image = this.blog.imageUrl;
       })
       .catch((err) => {
+        this.isLoading = false;
         console.log(err);
       });
   },
@@ -128,11 +162,7 @@ export default {
       }
     },
     async onUpdate() {
-      if (
-        this.imageFile != "" &&
-        this.blog.title != "" &&
-        this.blog.content != ""
-      ) {
+      if (this.$refs.form.validate() && this.imageFile) {
         this.isUpdateBtnLoading = true;
         const filePath = `images/${auth.currentUser.uid}/Image-${Date.now()}`;
         storageRef
@@ -190,6 +220,7 @@ export default {
       }
     },
     async onDelete() {
+      this.dialog = false;
       this.isDeleteBtnLoading = true;
       db.collection("Blogs")
         .doc(this.$route.params.blog_id)
@@ -199,6 +230,8 @@ export default {
             .refFromURL(this.blog.imageUrl)
             .delete()
             .then(() => {
+              this.$refs.form.reset();
+              this.image = "";
               this.isDeleteBtnLoading = false;
               this.success = "Blog updated successfully";
               setTimeout(() => {
@@ -221,5 +254,8 @@ export default {
 <style scoped>
 .cols {
   position: relative;
+}
+.spinner {
+  margin-top: 200px;
 }
 </style>

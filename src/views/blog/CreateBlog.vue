@@ -117,7 +117,7 @@ export default {
                   this.success = "Create Blog Sucess";
                   setTimeout(() => {
                     this.$router.push({ name: "Home" });
-                  }, 7000);
+                  }, 3000);
                 });
             });
           })

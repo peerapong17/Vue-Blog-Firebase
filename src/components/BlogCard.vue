@@ -7,9 +7,11 @@
       <v-img height="250" :src="imageUrl"></v-img>
       <v-card-text>{{ content.substring(0, 90) + "..." }}</v-card-text>
       <div class="d-flex justify-space-between align-center mx-3 my-2">
-        <v-chip small color="primary">
-          {{ category }}
-        </v-chip>
+        <router-link :to="{name: 'GetBlogByCategory', params: {category: category }}" class="category">
+          <v-chip small dark color="blue">
+            {{ category }}
+          </v-chip></router-link
+        >
         <span>{{ convertedCreatedAt }}</span>
       </div>
       <v-divider class="mx-4"></v-divider>
@@ -113,4 +115,8 @@ export default {
 };
 </script>
 
-<style></style>
+<style scoped>
+  .category{
+    text-decoration: none;
+  }
+</style>

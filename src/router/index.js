@@ -8,6 +8,7 @@ import CreateBlog from "../views/blog/CreateBlog.vue";
 import BlogDetail from "../views/blog/BlogDetail.vue";
 import UserBlog from "../views/blog/UserBlog.vue";
 import EditBlog from "../views/blog/EditBlog.vue";
+import BlogFilteredByCategory from "../views/blog/BlogFilteredByCategory.vue";
 import { auth } from "../firebase/configs";
 
 Vue.use(VueRouter);
@@ -53,6 +54,12 @@ const routes = [
     name: "Create-Blog",
     component: CreateBlog,
     beforeEnter: authGuard,
+  },
+  {
+    path: "/blog/category/:category",
+    name: "GetBlogByCategory",
+    component: BlogFilteredByCategory,
+    props: true
   },
   {
     path: "/blog-detail/:blog_id",

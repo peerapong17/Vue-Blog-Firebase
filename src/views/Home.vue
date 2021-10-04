@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="px-10">
+  <v-container fluid class="px-10 d-flex flex-column align-end">
     <v-row justify="center" class="mt-16" v-if="isLoading">
       <v-col class="md-4">
         <v-skeleton-loader
@@ -27,54 +27,64 @@
         ></v-skeleton-loader>
       </v-col>
     </v-row>
-    <v-row wrap class="mt-3" v-else>
-      <template v-if="blogListListener.length != 0">
-        <BlogCard
-          v-for="blog in blogListListener"
-          :key="blog.id"
-          :title="blog.title"
-          :content="blog.content"
-          :imageUrl="blog.imageUrl"
-          :id="blog.id"
-          :likes="blog.likes"
-          :createdAt="blog.createdAt"
-          :category="blog.category"
-        />
-      </template>
-      <div v-else class="noBlog">
-        <h1>There is no blog...</h1>
-      </div>
-    </v-row>
+    <template v-else>
+      <v-select
+        @change="onFilter"
+        class="mt-2"
+        :items="items"
+        label="Date"
+        solo
+      ></v-select>
+      <v-row wrap class="mt-3">
+        <template v-if="copiedBlogList.length != 0">
+          <BlogCard
+            v-for="blog in copiedBlogList"
+            :key="blog.id"
+            :title="blog.title"
+            :content="blog.content"
+            :imageUrl="blog.imageUrl"
+            :id="blog.id"
+            :likes="blog.likes"
+            :createdAt="blog.createdAt"
+            :category="blog.category"
+          />
+        </template>
+        <div v-else class="noBlog">
+          <h1>There is no blog...</h1>
+        </div>
+      </v-row>
+    </template>
   </v-container>
 </template>
 
 <script>
-import { db } from "../firebase/configs";
+import { mapState, mapActions } from "vuex";
 import BlogCard from "../components/BlogCard.vue";
 export default {
   components: { BlogCard },
   data() {
     return {
-      isLoading: true,
-      blogList: [],
+      items: ["createdAt", "category", "title", "view", "like"],
     };
   },
   created() {
-    db.collection("Blogs")
-      .orderBy("createdAt", "desc")
-      .onSnapshot((snapShot) => {
-        console.log(snapShot)
-        this.isLoading = false;
-        this.blogList = [];
-        snapShot.docs.map((doc) => {
-          this.blogList.push({ ...doc.data(), id: doc.id });
-        });
-      });
+    this.streamBuilder({ field: "createdAt", direction: "desc" });
+  },
+  methods: {
+    ...mapActions(["streamBuilder"]),
+    async onFilter(event) {
+      if (event == "createdAt") {
+        this.streamBuilder({ field: event, direction: "desc" });
+      } else {
+        this.streamBuilder({ field: event, direction: "asc" });
+      }
+    },
   },
   computed: {
-    blogListListener() {
-      return [...this.blogList];
-    },
+    ...mapState(["copiedBlogList", "isLoading"]),
+    // blogListListener() {
+    //   return [...this.blogList];
+    // },
   },
 };
 </script>

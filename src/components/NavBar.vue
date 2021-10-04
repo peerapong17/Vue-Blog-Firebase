@@ -37,11 +37,21 @@
 
       <v-toolbar-title>Todo</v-toolbar-title>
       <v-spacer></v-spacer>
+      <v-text-field
+      class="shrink"
+      hide-details
+      single-line
+      v-model="searchInput"
+      solo
+      placeholder="Search..."
+      append-icon="mdi-magnify"
+      @click:append="onSearch"
+    ></v-text-field>
       <v-btn
         @click="dialog = true"
         large
         color="red lighten-1"
-        class="white--text"
+        class="white--text ml-3"
         >Logout<v-icon right>mdi-logout</v-icon></v-btn
       >
     </v-app-bar>
@@ -76,7 +86,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState, mapMutations } from "vuex";
 import { auth } from "../firebase/configs";
 export default {
   name: "App",
@@ -87,9 +97,11 @@ export default {
       username: "",
       dialog: false,
       drawer: false,
+      searchInput: ""
     };
   },
   methods: {
+    ...mapMutations(["getBlogBySearchInput"]),
     onLogout() {
       auth
         .signOut()
@@ -101,6 +113,9 @@ export default {
           this.dialog = false;
         });
     },
+    onSearch(){
+      this.getBlogBySearchInput(this.searchInput)
+    }
   },
   computed: {
     ...mapState(["items"]),

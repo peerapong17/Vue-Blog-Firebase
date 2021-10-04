@@ -16,9 +16,17 @@
           }}</v-card-title>
           <v-card-text>{{ blog.content }}</v-card-text>
           <div class="d-flex justify-space-between align-center mx-4 my-2">
-            <v-chip small color="primary">
-              {{ blog.category }}
-            </v-chip>
+            <router-link
+              :to="{
+                name: 'GetBlogByCategory',
+                params: { category: blog.category },
+              }"
+              class="category"
+            >
+              <v-chip small dark color="blue">
+                {{ blog.category }}
+              </v-chip></router-link
+            >
             <span>{{ convertedCreatedAt }}</span>
           </div>
           <v-divider class="mx-4"></v-divider>
@@ -172,7 +180,10 @@ export default {
 </script>
 
 <style scoped>
-  .spinner{
-    margin-top: 200px;
-  }
+.spinner {
+  margin-top: 200px;
+}
+.category {
+  text-decoration: none;
+}
 </style>

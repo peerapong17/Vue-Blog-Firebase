@@ -117,21 +117,22 @@ export default {
 </script>
 
 <style scoped>
+.card {
+  max-width: 400px;
+}
 .forgetPasswordOrCreateAccountBox {
   display: flex;
   justify-content: space-between;
   margin-bottom: 27px;
   margin-top: 10px;
 }
-.CreateAccount, .forgetPassword {
+.CreateAccount,
+.forgetPassword {
   text-decoration: none;
 }
 
-.CreateAccount:hover, .forgetPassword:hover {
+.CreateAccount:hover,
+.forgetPassword:hover {
   text-decoration: underline;
-}
-
-.card{
-  max-width: 400px;
 }
 </style>

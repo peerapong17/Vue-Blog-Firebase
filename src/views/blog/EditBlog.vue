@@ -33,19 +33,37 @@
           ><v-icon>mdi-upload</v-icon></v-btn
         >
         <v-Text-field
-          :rules="[(v) => !!v || 'Title is required']"
+          :rules="[
+            (v) => !!v || 'Title is required',
+            (v) =>
+              (v && v.length >= 6) ||
+              'Title should be at least 6 characters long',
+          ]"
           v-model="blog.title"
           filled
           label="Title"
           required
         />
         <v-textarea
-          :rules="[(v) => !!v || 'Content is required']"
+          :rules="[
+            (v) => !!v || 'Content is required',
+            (v) =>
+              (v && v.length >= 30) ||
+              'Title should be at least 30 characters long',
+          ]"
           v-model="blog.content"
           filled
           label="Content"
           required
+          counter="30"
         />
+        <v-select
+          :items="categories"
+          filled
+          label="Category"
+          v-model="blog.category"
+          :rules="[(v) => !!v || 'Category is required']"
+        ></v-select>
       </v-form>
       <v-row>
         <v-spacer></v-spacer>
@@ -123,6 +141,7 @@ export default {
       isUpdateBtnLoading: false,
       isDeleteBtnLoading: false,
       fileType: ["image/png", "image/jpeg"],
+      categories: ["Travel", "Food", "Culture", "Tradition"],
     };
   },
   created() {
@@ -175,6 +194,7 @@ export default {
                 .update({
                   title: this.blog.title,
                   content: this.blog.content,
+                  category: this.blog.category,
                   imageUrl: url,
                   filePath: filePath,
                 })
@@ -205,6 +225,7 @@ export default {
           .update({
             title: this.blog.title,
             content: this.blog.content,
+            category: this.blog.category
           })
           .then(() => {
             this.isUpdateBtnLoading = false;

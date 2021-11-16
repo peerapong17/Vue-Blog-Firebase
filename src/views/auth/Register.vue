@@ -13,7 +13,18 @@
               prepend-inner-icon="mdi-account"
               label="Username"
               solo
-              :rules="[(v) => !!v || 'Username is required']"
+              :rules="[
+                (v) => !!v || 'Username is required',
+                (v) =>
+                  (v && v.length >= 3) ||
+                  'Username should be at least 3 characters long',
+                (v) =>
+                  /[a-zA-Z]{3,}/g.test(v) ||
+                  'Username should contain at least 3 letters',
+                (v) =>
+                  /^[a-zA-Z-\d]+$/.test(v) ||
+                  'Username cannot contain special letters',
+              ]"
               v-model="username"
             ></v-text-field>
             <v-text-field
@@ -23,7 +34,10 @@
               solo
               :rules="[
                 (v) => !!v || 'Email is required',
-                (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+                (v) =>
+                  /^([a-z\.-\d]+)@([a-z-]+)\.([a-z]{2,8})(\.[a-z]{2,8})?$/.test(
+                    v
+                  ) || 'E-mail must be valid',
               ]"
               v-model="email"
             ></v-text-field>
@@ -36,6 +50,9 @@
                 (v) => !!v || 'password is required',
                 (v) =>
                   (v && v.length >= 6) || 'Name must be at least 6 characters',
+                (v) =>
+                  /[a-zA-Z]{3,}/g.test(v) ||
+                  'Password should contain at least 3 letters',
               ]"
               solo
               v-model="password"
@@ -46,10 +63,11 @@
               prepend-inner-icon="mdi-restart"
               label="Confirm-Password"
               solo
-              :rules="[(v) => !!v || 'confirmPassword is required']"
+              :rules="[
+                (v) => !!v || 'confirmPassword is required',
+                password == confirmPassword || 'Password must match',
+              ]"
               v-model="confirmPassword"
-              required
-              hide-details
             ></v-text-field>
           </v-form>
           <router-link :to="{ name: 'Login' }" class="login"
@@ -128,7 +146,7 @@ export default {
 .login:hover {
   text-decoration: underline;
 }
-.card{
+.card {
   max-width: 400px;
 }
 </style>

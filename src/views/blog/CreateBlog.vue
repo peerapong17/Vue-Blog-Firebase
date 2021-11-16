@@ -26,24 +26,32 @@
           ><v-icon>mdi-upload</v-icon></v-btn
         >
         <v-Text-field
-          :rules="[(v) => !!v || 'Title is required']"
+          :rules="[
+          (v) => !!v || 'Title is required',
+          (v) => (v && v.length >= 6) || 'Title should be at least 6 characters long'
+          ]"
           v-model="title"
           filled
           label="Title"
           required
         />
         <v-textarea
-          :rules="[(v) => !!v || 'Content is required']"
+          :rules="[(v) => !!v || 'Content is required',
+            (v) => (v && v.length >= 30) || 'Title should be at least 30 characters long'
+          ]"
           v-model="content"
           filled
           label="Content"
           required
+          counter="30"
+          clearable
         />
         <v-select
           :items="categories"
           filled
           label="Category"
           v-model="category"
+          :rules="[(v) => !!v || 'Category is required']"
         ></v-select>
         <div class="btnContainer">
           <v-btn
@@ -108,11 +116,12 @@ export default {
                   imageUrl: url,
                   filePath: filePath,
                   likes: [],
+                  comments: [],
                   createdAt: timeStamp,
                 })
                 .then(() => {
                   this.isLoading = false;
-                  this.$refs.form.reset()
+                  this.$refs.form.reset();
                   this.imageUrl = "";
                   this.success = "Create Blog Sucess";
                   setTimeout(() => {

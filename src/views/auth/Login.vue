@@ -25,7 +25,6 @@
               solo
               v-model="password"
               type="password"
-              hide-details
             ></v-text-field>
           </v-form>
           <div class="forgetPasswordOrCreateAccountBox">

@@ -37,7 +37,7 @@ export default new Vuex.Store({
   },
   actions: {
     streamBuilder(context, payload) {
-      db.collection("Blogs")
+      return db.collection("Blogs")
         .orderBy(payload["field"], payload["direction"])
         .onSnapshot((snapShot) => {
           context.commit("isLoading");

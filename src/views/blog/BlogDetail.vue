@@ -58,7 +58,7 @@
           >
         </v-row>
         <Comment
-          v-for="(comment, index) in comments"
+          v-for="(comment, index) in blog.comments"
           :key="index"
           :comment="comment"
           @onDeleteComment="onDeleteComment($event)"
@@ -70,6 +70,7 @@
 
 <script>
 import moment from "moment";
+import { v4 as uuidv4 } from "uuid";
 import Comment from "../../components/Comment.vue";
 import { auth, db, arrayField, timeStamp } from "../../firebase/configs";
 export default {
@@ -80,26 +81,22 @@ export default {
       blog: {},
       comments: [],
       isLoading: true,
+      unsubBlogDetail: null,
     };
   },
   created() {
-    db.collection("Blogs")
+    this.unsubBlogDetail = db
+      .collection("Blogs")
       .doc(this.$route.params.blog_id)
-      .get()
-      .then((doc) => {
-        this.blog = { ...doc.data(), id: doc.id };
-      })
-      .then(() => {
-        db.collection("Comments")
-          .where("blogId", "==", this.blog.id)
-          .get()
-          .then((res) => {
-            this.isLoading = false;
-            res.docs.map((doc) => {
-              this.comments.push({ ...doc.data(), id: doc.id });
-            });
-          });
+      .onSnapshot((snapshot) => {
+        console.log(snapshot.data()["content"]);
+        console.log(snapshot.id);
+        this.blog = { ...snapshot.data(), id: snapshot.id };
+        this.isLoading = false;
       });
+  },
+  destroyed() {
+    this.unsubBlogDetail();
   },
   methods: {
     async onAddLike() {
@@ -129,38 +126,31 @@ export default {
     },
     async onAddComment() {
       await db
-        .collection("Comments")
-        .add({
-          userId: auth.currentUser.uid,
-          username: auth.currentUser.displayName ?? "Anonymous",
-          blogId: this.blog.id,
-          comment: this.comment,
-          createdAt: timeStamp,
-        })
-        .then((res) => {
-          this.comments = [
-            ...this.comments,
+        .collection("Blogs")
+        .doc(this.blog.id)
+        .update({
+          comments: [
+            ...this.blog.comments,
             {
-              id: res.id,
+              id: uuidv4(),
               userId: auth.currentUser.uid,
               username: auth.currentUser.displayName ?? "Anonymous",
-              blogId: this.blog.id,
               comment: this.comment,
               createdAt: timeStamp,
             },
-          ];
+          ],
         });
       this.comment = "";
     },
-    onDeleteComment(blog_id) {
-      db.collection("Comments")
-        .doc(blog_id)
-        .delete()
-        .then(() => {
-          const index = this.comments
-            .map((comment) => comment.id)
-            .indexOf(blog_id);
-          this.comments.splice(index, 1);
+    onDeleteComment(commentId) {
+      this.blog.comments = this.blog.comments.filter((comment) => {
+        return comment.id != commentId;
+      });
+
+      db.collection("Blogs")
+        .doc(this.blog.id)
+        .update({
+          comments: this.blog.comments,
         });
     },
   },

@@ -64,11 +64,18 @@ export default {
   components: { BlogCard },
   data() {
     return {
+      unsubStream: null,
       items: ["createdAt", "category", "title", "view", "like"],
     };
   },
   created() {
-    this.streamBuilder({ field: "createdAt", direction: "desc" });
+    this.unsubStream = this.streamBuilder({
+      field: "createdAt",
+      direction: "desc",
+    });
+  },
+  destroyed() {
+    this.unsubStream();
   },
   methods: {
     ...mapActions(["streamBuilder"]),
